@@ -432,6 +432,35 @@ def get_logits(sess,
     output = model.model(hparams=hparams, X=context, gpus=gpus)
 
     return output
+def get_logitsTF(sess,
+              checkpoint='latest',
+              run_name="run1",
+              checkpoint_dir="checkpoint",
+              model_name=None,
+              model_dir='models',
+              multi_gpu=False):
+    """Loads the model checkpoint or existing model into a TensorFlow session
+    for repeated predictions.
+    """
+
+    if model_name:
+        checkpoint_path = os.path.join(model_dir, model_name)
+    else:
+        checkpoint_path = os.path.join(checkpoint_dir, run_name)
+
+    hparams = model.default_hparams()
+    with open(os.path.join(checkpoint_path, 'hparams.json')) as f:
+        hparams.override_from_dict(json.load(f))
+
+    context = tf.compat.v1.placeholder(tf.int32, [1, None])
+
+    gpus = []
+    if multi_gpu:
+        gpus = get_available_gpus()
+
+    output = model.model(hparams=hparams, X=context, gpus=gpus)
+
+    return output['logits'].eval(session=sess)
 
 
 def generate(sess,
